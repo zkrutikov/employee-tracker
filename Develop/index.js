@@ -67,13 +67,10 @@ const addDepartment = () => {
 }
 
 const addRole = () => {
-    const addRoleQuery = `SELECT * FROM role; SELECT * FROM department`
-    connection.query(addRoleQuery, (err, res) => {
+    connection.query ('SELECT title FROM role', (err, res) => {
         if (err) throw err;
-
-        console.log('');
-        console.table('List of current Roles:'), res[0];
-
+        console.table(res[0]);
+    
         inquirer.prompt([
             {
                 name: 'newTitle',
@@ -84,22 +81,13 @@ const addRole = () => {
                 name: 'newSalary',
                 type: 'input',
                 message: 'Enter the salary for the new Title:'
-            },
-            {
-                name: 'dept',
-                type: 'list',
-                choices: function () {
-                    let choiceArray = results[1].map(choice => choice.department_name);
-                    return choiceArray;
-                },
-                message: 'Select the Department for this new Title:'
             }
+           // need to add option to link new role to existing department
         ]).then((answer) => {
             connection.query(
-                `INSERT INTO roles(title, salary, department_id) 
+                `INSERT INTO role(title, salary) 
                 VALUES
-                ("${answer.newTitle}", "${answer.newSalary}", 
-                (SELECT id FROM departments WHERE department_name = "${answer.dept}"));`
+                ("${answer.newTitle}", "${answer.newSalary}");`
             )
             init();
         })
@@ -107,7 +95,7 @@ const addRole = () => {
 }
 
 const addEmployee = () => {
-    const roleQuery = 'SELECT * from role; SELECT CONCAT (e.first_name," ",e.last_name) AS full_name FROM employee e'
+    const roleQuery = 'SELECT * from role; SELECT CONCAT (e.first_name," ",e.last_name) AS full_name FROM employee'
     const addEmployeeQuestions = ['What is the first name?', 'What is the last name?', 'What is their role?', 'Who is their manager?']
 
     connection.query(roleQuery, (err, results) => {
@@ -162,7 +150,7 @@ const exit = () => {
 
 const updateRole = () => {
     const query = `SELECT CONCAT (first_name," ",last_name) AS full_name FROM employee; SELECT title FROM role`
-    connection.query(query, (err, results) => {
+    connection.query(query, (err, res) => {
         if (err) throw err;
 
         inquirer.prompt([
@@ -170,7 +158,7 @@ const updateRole = () => {
                 name: 'empl',
                 type: 'list',
                 choices: function () {
-                    let choiceArray = results[0].map(choice => choice.full_name);
+                    let choiceArray = res[0].map(choice => choice.full_name);
                     return choiceArray;
                 },
                 message: 'Select an employee to update their role:'
@@ -186,7 +174,7 @@ const updateRole = () => {
         ]).then((answer) => {
             connection.query(`UPDATE employee 
             SET role_id = (SELECT id FROM role WHERE title = ? ) 
-            WHERE id = (SELECT id FROM(SELECT id FROM employee WHERE CONCAT(first_name," ",last_name) = ?) AS tmptable)`, [answer.newRole, answer.empl], (err, results) => {
+            WHERE id = ((SELECT id FROM employee WHERE CONCAT(first_name," ",last_name) = ?) AS tmptable)`, [answer.newRole, answer.empl], (err, res) => {
                     if (err) throw err;
                     init();
                 })
