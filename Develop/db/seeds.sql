@@ -1,5 +1,5 @@
 
-INSERT INTO department(name) 
+INSERT INTO department(department_name) 
 VALUES 
 ('sales'), 
 ('engineering'),
